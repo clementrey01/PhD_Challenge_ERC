@@ -423,18 +423,10 @@ def probe_locations(u: np.ndarray) -> dict:
     }
 
 if __name__ == '__main__':
-    from argparse import ArgumentParser
     import matplotlib.pyplot as plt
     from matplotlib.widgets import Button
     from skfem.visuals.matplotlib import plot
     import numpy as np
-
-    parser = ArgumentParser(description='Coupled thermo-hydro-mechanical diffusion')
-    parser.add_argument('-f', '--field', choices=['temperature', 'pressure'], 
-                        default='temperature', help='which field to visualize')
-    parser.add_argument('--dual', action='store_true',
-                        help='show both fields side by side')
-    args = parser.parse_args()
 
     # Run initial analysis
     print("\n" + "="*50)
@@ -483,30 +475,15 @@ if __name__ == '__main__':
 
     # Interactive visualization class
     class InteractiveSimulationViewer:
-        def __init__(self, evolution_data, dual_mode=False, field='temperature'):
+        def __init__(self, evolution_data):
             self.evolution_data = evolution_data
             self.current_frame = 0
-            self.dual_mode = dual_mode
-            self.field = field
             self.playing = False
             self.auto_step_interval = 0
             
-            # Calculate aspect ratio from mesh bounds
-            x_min, x_max = mesh.p[0].min(), mesh.p[0].max()
-            y_min, y_max = mesh.p[1].min(), mesh.p[1].max()
-            mesh_aspect = (x_max - x_min) / (y_max - y_min)
-            
             # Setup the plot with correct aspect ratio
-            if dual_mode:
-                # For dual mode, each subplot gets the mesh aspect ratio
-                self.fig, (self.ax1, self.ax2) = plt.subplots(1, 2, figsize=(14, 6))
-                self.setup_dual_plot()
-            else:
-                # For single mode, figure size respects mesh aspect ratio
-                fig_width = 10
-                fig_height = fig_width / mesh_aspect
-                self.fig, self.ax = plt.subplots(1, 1, figsize=(fig_width, fig_height))
-                self.setup_single_plot()
+            self.fig, (self.ax1, self.ax2) = plt.subplots(1, 2, figsize=(14, 6))
+            self.setup_dual_plot()
             
             # Add control buttons
             self.setup_controls()
@@ -534,29 +511,6 @@ if __name__ == '__main__':
             self.ax2.set_title('Pressure at t = 0.00')
             self.ax2.set_aspect('equal')
             self.pres_cbar = self.fig.colorbar(self.ax2.get_children()[0], ax=self.ax2, label='Pressure (MPa)')
-            
-        def setup_single_plot(self):
-            """Setup single field visualization"""
-            u_T_init_viz_, u_p_init_viz_ = extract_fields(self.evolution_data[0][1])
-            u_T_init_viz, u_p_init_viz = dimensionalize_and_add_background(u_T_init_viz_, 
-                                                                           u_p_init_viz_, mesh)
-            
-            # Temperature subplot
-            if self.field == 'temperature':
-                field_data = u_T_init_viz[basisT.nodal_dofs.flatten()]
-                field_name = 'Temperature (C)'
-                colormap = 'viridis'
-            else:
-                # Temperature subplot
-                field_data = u_p_init_viz[basisp.nodal_dofs.flatten()]  
-                field_name = 'Pressure (MPa)'
-                colormap = 'viridis'
-
-            self.field_plot = plot(mesh, field_data, shading='gouraud', cmap=colormap, ax=self.ax)
-            self.title = self.ax.set_title(f'{field_name} at t = 0.00')
-            self.ax.set_aspect('equal')
-            self.field_plot_obj = self.ax.get_children()[0]
-            self.field_cbar = self.fig.colorbar(self.field_plot_obj, ax=self.ax, label=f'{field_name}')
 
         def setup_controls(self):
             """Setup control buttons"""
@@ -607,29 +561,16 @@ if __name__ == '__main__':
             u_T_d, u_p_d = dimensionalize_and_add_background(u_T_nd, u_p_nd, mesh)
             
             time_days = t * tc / (3600 * 24)
+
+            # Update temperature plot
+            u_T_viz = u_T_d[basisT.nodal_dofs.flatten()]
+            self.ax1.get_children()[0].set_array(u_T_viz)
+            self.ax1.set_title(f'Temperature (C) at t = {time_days:.1f} days')
             
-            if self.dual_mode:
-                # Update temperature plot
-                u_T_viz = u_T_d[basisT.nodal_dofs.flatten()]
-                self.ax1.get_children()[0].set_array(u_T_viz)
-                self.ax1.set_title(f'Temperature (C) at t = {time_days:.1f} days')
-                
-                # Update pressure plot
-                u_p_viz = u_p_d[basisp.nodal_dofs.flatten()]  
-                self.ax2.get_children()[0].set_array(u_p_viz)
-                self.ax2.set_title(f'Pressure (MPa) at t = {time_days:.1f} days')
-                
-            else:
-                # Update single field
-                if self.field == 'temperature':
-                    new_data = u_T_d[basisT.nodal_dofs.flatten()]
-                    field_name = 'Temperature (C)'
-                else:
-                    new_data = u_p_d[basisp.nodal_dofs.flatten()]
-                    field_name = 'Pressure (MPa)'
-                
-                self.field_plot_obj.set_array(new_data)
-                self.title.set_text(f'{field_name} at t = {time_days:.1f} days')
+            # Update pressure plot
+            u_p_viz = u_p_d[basisp.nodal_dofs.flatten()]  
+            self.ax2.get_children()[0].set_array(u_p_viz)
+            self.ax2.set_title(f'Pressure (MPa) at t = {time_days:.1f} days')
             
             # Update info text
             self.info_text.set_text(f'Frame {self.current_frame}/{len(self.evolution_data)-1}\n'
@@ -698,16 +639,13 @@ if __name__ == '__main__':
             t, _= self.evolution_data[self.current_frame]
             time_days = t * tc / (3600 * 24)
             
-            if self.dual_mode:
-                filename = f'coupled_diffusion_dual_frame_{self.current_frame:04d}_t_{time_days:.1f}days.png'
-            else:
-                filename = f'coupled_diffusion_{self.field}_frame_{self.current_frame:04d}_t_{time_days:.1f}days.png'
+            filename = f'coupled_diffusion_dual_frame_{self.current_frame:04d}_t_{time_days:.1f}days.png'
             
             self.fig.savefig(filename, dpi=300, bbox_inches='tight')
             print(f"Saved: {filename}")
 
     # Create interactive viewer
-    viewer = InteractiveSimulationViewer(evolution_data, args.dual, args.field)
+    viewer = InteractiveSimulationViewer(evolution_data)
     
     print("\n" + "="*50)
     print("INTERACTIVE CONTROLS:")
