@@ -27,17 +27,8 @@ The code in `EGS_simulation.py` simulates the coupled equations and generates in
 
 ### Command-Line Interface
 
-The code accepts several command-line arguments for controlling the simulation and the visualization.
-
-#### **Commands**
+The code can be launched very easily by the command :
 
 ```bash
-python EGS_simulation.py [OPTIONS]
+python EGS_simulation.py
 ```
-
-##### ** Arguments**
-
-- `-f`, `--field` : Choose the field to visualize, between :
-  - `temperature` (default)
-  - `pressure`
-- `--dual` : Show both fields (temperature and pressure) side by side.
