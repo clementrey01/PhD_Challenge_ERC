@@ -10,13 +10,14 @@ This repository contains code and reports related to both version of the **PhD C
   - **Code**: The main code for simulating the EGS system is available in the file [EGS_simulation.py](Original_version/EGS_simulation.py).
   - **Images**: This folder contains images used in the Jupyter Notebook and the LaTeX reports.
   - **Previous Computations**: The folder `Fenicsx and GMSH tries` contains earlier attempts of aborted GMSH meshes, and FEniCSx code implementations.
-  - **Scikit Help Codes**: The folder `Scikit help codes` contains helper codes inspired by examples from Scikit-FEM.
 
 - **New version**: about the new version of the PhD Challenge:
   - **PhD Challenge Report**: The **PDF** version of the PhD challenge report can be found in the file [PhD Challenge Report](New_version/PhD_Challenge_report_new.pdf).
   - **Extended Jupyter Report**: The **Jupyter Notebook** with an extended version of the report and more details on the results is located in [EXTENDED Challenge report](New_version/EXTENDED_Challenge_report_new.ipynb).
   - **Code**: The main code for simulating the EGS system is available in the file [EGS_simulation.py](New_version/EGS_simulation_new.py).
   - **Images**: This folder contains images used in the Jupyter Notebook and the LaTeX reports.
+
+- **Scikit Help Codes**: The folder `Scikit help codes` contains helper codes inspired by examples from Scikit-FEM.
 
 ## Code Description
 
